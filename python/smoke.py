@@ -18,7 +18,14 @@ with dbapi.connect(driver=driver_path, uri="profile://pypistats") as conn:
             for t in s["db_schema_tables"]
         ],
     )
+
     print(conn.adbc_get_table_schema("system"))
+    for schema in conn.adbc_get_objects(depth="columns").read_all().to_pylist()[0]["catalog_db_schemas"]:
+        for table in schema["db_schema_tables"]:
+            for column in table["table_columns"]:
+                print("column: ", column["column_name"], column["xdbc_type_name"])
+            for constraint in table["table_constraints"]:
+                print("primary key: ", constraint["constraint_column_names"])
 
     with conn.cursor() as cur:
         for table in ("python_minor", "system"):

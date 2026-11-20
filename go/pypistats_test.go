@@ -302,6 +302,19 @@ func TestMetadata(t *testing.T) {
 			for j := range tableNameArr.Len() {
 				names = append(names, tableNameArr.Value(j))
 			}
+
+			constraintsList := tableStructs.Field(3).(*array.List)
+			constraintStructs := constraintsList.ListValues().(*array.Struct)
+			require.Equal(t, 1, constraintStructs.Len())
+			assert.Equal(t, "PRIMARY KEY", constraintStructs.Field(1).(*array.String).Value(0))
+			colNames := constraintStructs.Field(2).(*array.List)
+			start, end := colNames.ValueOffsets(0)
+			colNameValues := colNames.ListValues().(*array.String)
+			var pk []string
+			for k := start; k < end; k++ {
+				pk = append(pk, colNameValues.Value(int(k)))
+			}
+			assert.Equal(t, []string{"package", "date"}, pk)
 		}
 	}
 	require.NoError(t, rdr.Err())

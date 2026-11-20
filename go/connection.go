@@ -84,10 +84,22 @@ func (c *connectionImpl) GetTablesForDBSchema(_ context.Context, catalog, schema
 		info := driverbase.TableInfo{TableName: t.Name, TableType: tableType}
 		if includeColumns {
 			info.TableColumns = columnInfos(categorySchema, colRe)
+			info.TableConstraints = tableConstraints(t)
 		}
 		out = append(out, info)
 	}
 	return out, nil
+}
+
+func tableConstraints(t table) []driverbase.ConstraintInfo {
+	if len(t.PrimaryKey) == 0 {
+		return nil
+	}
+	return []driverbase.ConstraintInfo{{
+		ConstraintName:        new(t.Name + "_pkey"),
+		ConstraintType:        "PRIMARY KEY",
+		ConstraintColumnNames: driverbase.RequiredList(t.PrimaryKey),
+	}}
 }
 
 func columnInfos(schema *arrow.Schema, filter *regexp.Regexp) []driverbase.ColumnInfo {

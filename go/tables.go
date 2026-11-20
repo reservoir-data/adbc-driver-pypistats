@@ -15,18 +15,23 @@ type table struct {
 	Endpoint string
 	// Remarks is surfaced through GetObjects.
 	Remarks string
+	// PrimaryKey lists the columns surfaced as the table's PRIMARY KEY
+	// constraint in GetObjects.
+	PrimaryKey []string
 }
 
 var tables = []table{
 	{
-		Name:     "python_minor",
-		Endpoint: "python_minor",
-		Remarks:  "Daily downloads per package, broken down by Python minor version (e.g. 3.12). Mirrors excluded.",
+		Name:       "python_minor",
+		Endpoint:   "python_minor",
+		Remarks:    "Daily downloads per package, broken down by Python minor version (e.g. 3.12). Mirrors excluded.",
+		PrimaryKey: []string{"package", "date"},
 	},
 	{
-		Name:     "system",
-		Endpoint: "system",
-		Remarks:  "Daily downloads per package, broken down by operating system (darwin, linux, windows, other). Mirrors excluded.",
+		Name:       "system",
+		Endpoint:   "system",
+		Remarks:    "Daily downloads per package, broken down by operating system (darwin, linux, windows, other). Mirrors excluded.",
+		PrimaryKey: []string{"package", "date"},
 	},
 }
 
