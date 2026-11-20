@@ -119,7 +119,7 @@ func (h *harness) query(t *testing.T, q string, stmtOpts map[string]string) (arr
 }
 
 type row struct {
-	pkg, category string // category "" means null
+	pkg, category string
 	date          string
 	downloads     int64
 }
@@ -135,11 +135,8 @@ func collect(t *testing.T, rdr array.RecordReader) []row {
 		date := rec.Column(2).(*array.Date32)
 		dl := rec.Column(3).(*array.Int64)
 		for i := range int(rec.NumRows()) {
-			r := row{pkg: pkg.Value(i), date: date.Value(i).FormattedString(), downloads: dl.Value(i)}
-			if cat.IsValid(i) {
-				r.category = cat.Value(i)
-			}
-			out = append(out, r)
+			require.True(t, cat.IsValid(i), "category must not be null")
+			out = append(out, row{pkg: pkg.Value(i), category: cat.Value(i), date: date.Value(i).FormattedString(), downloads: dl.Value(i)})
 		}
 	}
 	require.NoError(t, rdr.Err())
@@ -163,10 +160,10 @@ func TestPythonMinor(t *testing.T) {
 
 	assert.Equal(t, []row{
 		{"requests", "3.12", "2026-11-01", 10},
-		{"requests", "", "2026-11-01", 2},
+		{"requests", "null", "2026-11-01", 2},
 		{"requests", "3.13", "2026-11-02", 7},
 		{"numpy", "3.12", "2026-11-01", 10},
-		{"numpy", "", "2026-11-01", 2},
+		{"numpy", "null", "2026-11-01", 2},
 		{"numpy", "3.13", "2026-11-02", 7},
 	}, collect(t, rdr))
 	assert.Equal(t, defaultUserAgent, fs.userAgent.Load())
@@ -314,7 +311,7 @@ func TestMetadata(t *testing.T) {
 			for k := start; k < end; k++ {
 				pk = append(pk, colNameValues.Value(int(k)))
 			}
-			assert.Equal(t, []string{"package", "date"}, pk)
+			assert.Equal(t, []string{"package", "category", "date"}, pk)
 		}
 	}
 	require.NoError(t, rdr.Err())

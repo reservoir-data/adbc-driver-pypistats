@@ -110,8 +110,11 @@ func buildCategoryRecord(alloc memory.Allocator, pkg string, rows []apiRow) (arr
 			return nil, fmt.Errorf("invalid date %q: %w", row.Date, err)
 		}
 		pkgB.Append(pkg)
-		if row.Category == nil || *row.Category == "null" {
-			catB.AppendNull()
+		// category is part of the primary key, so it must not be null. pypistats
+		// reports unknown categories as the string "null"; a JSON null is
+		// normalized to the same value.
+		if row.Category == nil {
+			catB.Append("null")
 		} else {
 			catB.Append(*row.Category)
 		}

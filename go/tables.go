@@ -25,22 +25,22 @@ var tables = []table{
 		Name:       "python_minor",
 		Endpoint:   "python_minor",
 		Remarks:    "Daily downloads per package, broken down by Python minor version (e.g. 3.12). Mirrors excluded.",
-		PrimaryKey: []string{"package", "date"},
+		PrimaryKey: []string{"package", "category", "date"},
 	},
 	{
 		Name:       "system",
 		Endpoint:   "system",
 		Remarks:    "Daily downloads per package, broken down by operating system (darwin, linux, windows, other). Mirrors excluded.",
-		PrimaryKey: []string{"package", "date"},
+		PrimaryKey: []string{"package", "category", "date"},
 	},
 }
 
 // categorySchema is shared by every "category"-style endpoint.
 var categorySchema = arrow.NewSchema([]arrow.Field{
 	{Name: "package", Type: arrow.BinaryTypes.String, Nullable: false},
-	{Name: "category", Type: arrow.BinaryTypes.String, Nullable: true},
+	{Name: "category", Type: arrow.BinaryTypes.String, Nullable: false},
 	{Name: "date", Type: arrow.FixedWidthTypes.Date32, Nullable: false},
-	{Name: "downloads", Type: arrow.PrimitiveTypes.Int64, Nullable: false},
+	{Name: "downloads", Type: arrow.PrimitiveTypes.Uint32, Nullable: false},
 }, nil)
 
 func lookupTable(name string) (table, bool) {
