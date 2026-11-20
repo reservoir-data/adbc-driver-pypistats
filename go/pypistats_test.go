@@ -121,7 +121,7 @@ func (h *harness) query(t *testing.T, q string, stmtOpts map[string]string) (arr
 type row struct {
 	pkg, category string
 	date          string
-	downloads     int64
+	downloads     uint32
 }
 
 func collect(t *testing.T, rdr array.RecordReader) []row {
@@ -133,7 +133,7 @@ func collect(t *testing.T, rdr array.RecordReader) []row {
 		pkg := rec.Column(0).(*array.String)
 		cat := rec.Column(1).(*array.String)
 		date := rec.Column(2).(*array.Date32)
-		dl := rec.Column(3).(*array.Int64)
+		dl := rec.Column(3).(*array.Uint32)
 		for i := range int(rec.NumRows()) {
 			require.True(t, cat.IsValid(i), "category must not be null")
 			out = append(out, row{pkg: pkg.Value(i), category: cat.Value(i), date: date.Value(i).FormattedString(), downloads: dl.Value(i)})

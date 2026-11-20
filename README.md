@@ -19,7 +19,7 @@ Both share one schema:
 package:   string  not null
 category:  string  not null  # minor version or OS; "null" when pypistats reports it unknown
 date:      date32  not null
-downloads: int64   not null
+downloads: uint32  not null
 ```
 
 The driver fetches packages concurrently and emits one record batch per

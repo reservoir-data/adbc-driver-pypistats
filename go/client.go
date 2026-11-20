@@ -25,7 +25,7 @@ var errPackageNotFound = errors.New("package not found")
 type apiRow struct {
 	Category  *string `json:"category"`
 	Date      string  `json:"date"`
-	Downloads int64   `json:"downloads"`
+	Downloads uint32  `json:"downloads"`
 }
 
 type apiResponse struct {

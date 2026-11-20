@@ -101,7 +101,7 @@ func buildCategoryRecord(alloc memory.Allocator, pkg string, rows []apiRow) (arr
 	pkgB := b.Field(0).(*array.StringBuilder)
 	catB := b.Field(1).(*array.StringBuilder)
 	dateB := b.Field(2).(*array.Date32Builder)
-	dlB := b.Field(3).(*array.Int64Builder)
+	dlB := b.Field(3).(*array.Uint32Builder)
 	b.Reserve(len(rows))
 
 	for _, row := range rows {
