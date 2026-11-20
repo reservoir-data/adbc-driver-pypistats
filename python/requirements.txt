@@ -1,0 +1,3 @@
+adbc-driver-manager
+pyarrow
+pyarrow-stubs

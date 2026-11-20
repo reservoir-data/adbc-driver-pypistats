@@ -1,0 +1,17 @@
+# ADBC connection profile for the pypistats driver.
+#
+# Use with:  ADBC_PROFILE_PATH=./profiles  and  uri = "profile://pypistats"
+# or copy to ~/Library/Application Support/ADBC/Profiles/ (macOS) /
+# ~/.config/adbc/profiles/ (Linux).
+#
+# `driver` is omitted so the application can point at a locally built
+# library; set it to a driver manifest name or an absolute path to the
+# shared library once installed.
+profile_version = 1
+
+[Options]
+# Profile values can't be arrays, so packages are comma-separated.
+"adbc.pypistats.packages" = "{{ env_var(PYPISTATS_PACKAGES) }}"
+"adbc.pypistats.max_concurrency" = 2
+"adbc.pypistats.max_retries" = 3
+"adbc.pypistats.request_timeout" = 30.0
