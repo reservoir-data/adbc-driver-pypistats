@@ -24,7 +24,17 @@ type connectionImpl struct {
 var (
 	_ driverbase.DbObjectsEnumerator = (*connectionImpl)(nil)
 	_ driverbase.TableTypeLister     = (*connectionImpl)(nil)
+	_ driverbase.AutocommitSetter    = (*connectionImpl)(nil)
 )
+
+// The driver is read-only, so transactions are meaningless. Accept either
+// autocommit mode and make Commit/Rollback no-ops so the driver manager
+// treats the connection as DB-API 2.0 compliant instead of warning.
+func (c *connectionImpl) SetAutocommit(context.Context, bool) error { return nil }
+
+func (c *connectionImpl) Commit(context.Context) error { return nil }
+
+func (c *connectionImpl) Rollback(context.Context) error { return nil }
 
 func (c *connectionImpl) NewStatement(ctx context.Context) (adbc.StatementWithContext, error) {
 	return driverbase.NewStatement(&statementImpl{

@@ -269,6 +269,24 @@ func TestTypedOptions(t *testing.T) {
 	assert.Equal(t, adbc.StatusNotImplemented, adbcStatus(t, opts.SetOption(ctx, "adbc.pypistats.bogus", "x")))
 }
 
+// The driver manager calls set_autocommit(False) on connect and warns that
+// the connection is not DB-API 2.0 compliant if that fails.
+func TestAutocommitIsNoOp(t *testing.T) {
+	ctx := context.Background()
+	h := setup(t, newFakeServer(t), nil)
+	opts := h.conn.(adbc.GetSetOptionsWithContext)
+	for _, v := range []string{adbc.OptionValueDisabled, adbc.OptionValueEnabled, adbc.OptionValueDisabled} {
+		require.NoError(t, opts.SetOption(ctx, adbc.OptionKeyAutoCommit, v))
+		got, err := opts.GetOption(ctx, adbc.OptionKeyAutoCommit)
+		require.NoError(t, err)
+		assert.Equal(t, v, got)
+	}
+
+	// With autocommit off, commit/rollback must succeed.
+	require.NoError(t, h.conn.Commit(ctx))
+	require.NoError(t, h.conn.Rollback(ctx))
+}
+
 func TestMetadata(t *testing.T) {
 	ctx := context.Background()
 	fs := newFakeServer(t)
