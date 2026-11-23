@@ -8,6 +8,7 @@ package pypistats
 import (
 	"context"
 	"net/http"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -23,35 +24,48 @@ const (
 	OptionPackages = "adbc.pypistats.packages"
 	// OptionBaseURL overrides the API root (default https://pypistats.org/api).
 	OptionBaseURL = "adbc.pypistats.base_url"
-	// OptionMaxConcurrency bounds concurrent HTTP requests per query (default 2).
+	// OptionMaxConcurrency bounds concurrent HTTP requests per query. Unset
+	// (the default) picks a value automatically from the available CPUs.
 	OptionMaxConcurrency = "adbc.pypistats.max_concurrency"
 	// OptionMaxRetries is the number of retries on HTTP 429/5xx (default 3).
 	OptionMaxRetries = "adbc.pypistats.max_retries"
 	// OptionRequestTimeout is the per-request timeout in seconds (default 30).
 	OptionRequestTimeout = "adbc.pypistats.request_timeout"
 
-	defaultMaxConcurrency = 2
-	defaultMaxRetries     = 3
-	defaultTimeout        = 30 * time.Second
-	defaultBackoff        = time.Second
+	// Requests are I/O-bound and pypistats.org rate-limits aggressively, so the
+	// automatic concurrency is clamped to a small range.
+	minAutoConcurrency = 2
+	maxAutoConcurrency = 8
+
+	defaultMaxRetries = 3
+	defaultTimeout    = 30 * time.Second
+	defaultBackoff    = time.Second
 )
 
 // config holds database-level settings; connections and statements copy it.
 type config struct {
 	packages       []string
 	baseURL        string
-	maxConcurrency int
+	maxConcurrency int // 0 means detect automatically
 	maxRetries     int
 	timeout        time.Duration
 }
 
 func defaultConfig() config {
 	return config{
-		baseURL:        defaultBaseURL,
-		maxConcurrency: defaultMaxConcurrency,
-		maxRetries:     defaultMaxRetries,
-		timeout:        defaultTimeout,
+		baseURL:    defaultBaseURL,
+		maxRetries: defaultMaxRetries,
+		timeout:    defaultTimeout,
 	}
+}
+
+// effectiveMaxConcurrency resolves the configured concurrency, detecting a
+// value from the available CPUs when it is unset.
+func (c config) effectiveMaxConcurrency() int {
+	if c.maxConcurrency > 0 {
+		return c.maxConcurrency
+	}
+	return min(max(runtime.GOMAXPROCS(0), minAutoConcurrency), maxAutoConcurrency)
 }
 
 func (c config) newClient() *client {
@@ -130,6 +144,10 @@ func (db *databaseImpl) SetOption(ctx context.Context, key, val string) error {
 		}
 		db.cfg.baseURL = val
 	case OptionMaxConcurrency, OptionMaxRetries:
+		if key == OptionMaxConcurrency && val == "" {
+			db.cfg.maxConcurrency = 0 // back to automatic
+			return nil
+		}
 		n, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
 			return db.ErrorHelper.InvalidArgument("%s must be an integer, got %q", key, val)
@@ -193,6 +211,9 @@ func (db *databaseImpl) GetOption(ctx context.Context, key string) (string, erro
 	case OptionBaseURL:
 		return db.cfg.baseURL, nil
 	case OptionMaxConcurrency:
+		if db.cfg.maxConcurrency == 0 {
+			return "", nil
+		}
 		return strconv.Itoa(db.cfg.maxConcurrency), nil
 	case OptionMaxRetries:
 		return strconv.Itoa(db.cfg.maxRetries), nil
@@ -205,7 +226,7 @@ func (db *databaseImpl) GetOption(ctx context.Context, key string) (string, erro
 func (db *databaseImpl) GetOptionInt(ctx context.Context, key string) (int64, error) {
 	switch key {
 	case OptionMaxConcurrency:
-		return int64(db.cfg.maxConcurrency), nil
+		return int64(db.cfg.effectiveMaxConcurrency()), nil
 	case OptionMaxRetries:
 		return int64(db.cfg.maxRetries), nil
 	}

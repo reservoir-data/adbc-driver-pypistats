@@ -42,7 +42,7 @@ package, in the order the packages are listed.
 | Key                               | Default                      | Scope               |
 |-----------------------------------|------------------------------|---------------------|
 | `adbc.pypistats.packages`         | (none; default scope for queries without a `WHERE package ...`) | database, statement |
-| `adbc.pypistats.max_concurrency`  | `2`                          | database            |
+| `adbc.pypistats.max_concurrency`  | (auto: CPU count, clamped to 2–8) | database       |
 | `adbc.pypistats.max_retries`      | `3` (HTTP 429/5xx, honors `Retry-After`) | database |
 | `adbc.pypistats.request_timeout`  | `30` (seconds)               | database            |
 | `adbc.pypistats.base_url`         | `https://pypistats.org/api`  | database            |

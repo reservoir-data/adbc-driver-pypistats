@@ -82,7 +82,7 @@ func (s *statementImpl) ExecuteQuery(ctx context.Context) (array.RecordReader, i
 		return nil, -1, s.ErrorHelper.InvalidState(
 			"no packages selected; add WHERE package = '<name>' (or package IN (...)) or set %s", OptionPackages)
 	}
-	rdr := newDownloadsReader(ctx, s.conn.Alloc, &s.ErrorHelper, s.conn.client, t, packages, s.conn.cfg.maxConcurrency)
+	rdr := newDownloadsReader(ctx, s.conn.Alloc, &s.ErrorHelper, s.conn.client, t, packages, s.conn.cfg.effectiveMaxConcurrency())
 	return rdr, -1, nil
 }
 
