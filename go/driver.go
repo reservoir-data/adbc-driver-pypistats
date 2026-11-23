@@ -96,8 +96,11 @@ type driverImpl struct {
 
 // NewDriver constructs the ADBC driver for pypistats.
 func NewDriver(alloc memory.Allocator) driverbase.DriverWithContext {
-	info := driverbase.DefaultDriverInfo("PyPIStats")
+	// The name prefixes every error message as "[pypistats] ...", so it must
+	// match the driver slug rather than the vendor's display name.
+	info := driverbase.DefaultDriverInfo("pypistats")
 	info.MustRegister(map[adbc.InfoCode]any{
+		adbc.InfoVendorName: "PyPIStats",
 		adbc.InfoDriverName: "ADBC Driver for pypistats.org",
 		adbc.InfoVendorSql:  false,
 	})
