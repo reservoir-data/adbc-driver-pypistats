@@ -47,25 +47,25 @@ func (s *statementImpl) GetOption(ctx context.Context, key string) (string, erro
 // scope.
 func (s *statementImpl) resolve() (table, []string, []int, error) {
 	if strings.TrimSpace(s.query) == "" {
-		return table{}, nil, nil, s.ErrorHelper.InvalidState("no query set; use one of %v", tableNames())
+		return table{}, nil, nil, s.ErrorHelper.InvalidState("could not execute: no query set, use one of %v", tableNames())
 	}
 	q, err := parseQuery(s.query)
 	if err != nil {
 		var qe *queryError
 		if errors.As(err, &qe) && qe.unsupported {
-			return table{}, nil, nil, s.ErrorHelper.NotImplemented("%s", qe.msg)
+			return table{}, nil, nil, s.ErrorHelper.NotImplemented("could not run query: %s", qe.msg)
 		}
-		return table{}, nil, nil, s.ErrorHelper.InvalidArgument("%s", err.Error())
+		return table{}, nil, nil, s.ErrorHelper.InvalidArgument("could not parse query: %s", err.Error())
 	}
 	t, ok := lookupTable(q.table)
 	if !ok {
-		return table{}, nil, nil, s.ErrorHelper.NotFound("unknown table %q; available tables: %v", q.table, tableNames())
+		return table{}, nil, nil, s.ErrorHelper.NotFound("could not find table: %q is unknown, available tables: %v", q.table, tableNames())
 	}
 	var cols []int
 	for _, name := range q.columns {
 		i := slices.IndexFunc(categorySchema.Fields(), func(f arrow.Field) bool { return strings.EqualFold(f.Name, name) })
 		if i < 0 {
-			return table{}, nil, nil, s.ErrorHelper.NotFound("unknown column %q in table %s", name, t.Name)
+			return table{}, nil, nil, s.ErrorHelper.NotFound("could not find column: %q is not in table %s", name, t.Name)
 		}
 		cols = append(cols, i)
 	}
@@ -102,22 +102,22 @@ func (s *statementImpl) ExecuteQuery(ctx context.Context) (array.RecordReader, i
 	}
 	if len(packages) == 0 {
 		return nil, -1, s.ErrorHelper.InvalidState(
-			"no packages selected; add WHERE package = '<name>' (or package IN (...)) or set %s", OptionPackages)
+			"could not execute: no packages selected, add WHERE package = '<name>' (or package IN (...)) or set %s", OptionPackages)
 	}
 	rdr := newDownloadsReader(ctx, s.conn.Alloc, &s.ErrorHelper, s.conn.client, t, packages, cols, s.conn.cfg.effectiveMaxConcurrency())
 	return rdr, -1, nil
 }
 
 func (s *statementImpl) ExecuteUpdate(context.Context) (int64, error) {
-	return -1, s.ErrorHelper.NotImplemented("pypistats is read-only")
+	return -1, s.ErrorHelper.NotImplemented("could not execute update: driver is read-only")
 }
 
 func (s *statementImpl) Bind(context.Context, arrow.RecordBatch) error {
-	return s.ErrorHelper.NotImplemented("pypistats does not support parameters")
+	return s.ErrorHelper.NotImplemented("could not bind parameters: not supported")
 }
 
 func (s *statementImpl) BindStream(context.Context, array.RecordReader) error {
-	return s.ErrorHelper.NotImplemented("pypistats does not support parameters")
+	return s.ErrorHelper.NotImplemented("could not bind parameters: not supported")
 }
 
 func (s *statementImpl) Prepare(context.Context) error {

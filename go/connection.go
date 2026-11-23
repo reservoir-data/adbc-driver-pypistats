@@ -140,10 +140,10 @@ func columnInfos(schema *arrow.Schema, filter *regexp.Regexp) []driverbase.Colum
 
 func (c *connectionImpl) GetTableSchema(_ context.Context, catalog, dbSchema *string, tableName string) (*arrow.Schema, error) {
 	if (catalog != nil && *catalog != catalogName) || (dbSchema != nil && *dbSchema != dbSchemaName) {
-		return nil, c.ErrorHelper.NotFound("table %q not found", tableName)
+		return nil, c.ErrorHelper.NotFound("could not get schema: table %q not found", tableName)
 	}
 	if _, ok := lookupTable(tableName); !ok {
-		return nil, c.ErrorHelper.NotFound("table %q not found (available: %v)", tableName, tableNames())
+		return nil, c.ErrorHelper.NotFound("could not get schema: table %q not found (available: %v)", tableName, tableNames())
 	}
 	return categorySchema, nil
 }

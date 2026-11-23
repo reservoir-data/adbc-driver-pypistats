@@ -63,7 +63,7 @@ func newDownloadsReader(
 			case sem <- struct{}{}:
 				defer func() { <-sem }()
 			case <-ctx.Done():
-				ch <- fetchResult{err: errs.Cancelled("fetching %s/%s: %s", pkg, tbl.Endpoint, ctx.Err())}
+				ch <- fetchResult{err: errs.Cancelled("could not fetch %s/%s: %s", pkg, tbl.Endpoint, ctx.Err())}
 				return
 			}
 			resp, err := c.fetch(ctx, pkg, tbl.Endpoint)
@@ -73,7 +73,7 @@ func newDownloadsReader(
 			}
 			rec, err := buildCategoryRecord(alloc, pkg, resp.Data)
 			if err != nil {
-				ch <- fetchResult{err: errs.WrapInvalidData(err, "parsing %s/%s", pkg, tbl.Endpoint)}
+				ch <- fetchResult{err: errs.WrapInvalidData(err, "could not parse %s/%s", pkg, tbl.Endpoint)}
 				return
 			}
 			ch <- fetchResult{rec: rec}
@@ -85,13 +85,13 @@ func newDownloadsReader(
 func wrapFetchError(errs *driverbase.ErrorHelper, err error, pkg string, tbl table) error {
 	switch {
 	case errors.Is(err, errPackageNotFound):
-		return errs.WrapNotFound(err, "package %q not found on pypistats (table %s)", pkg, tbl.Name)
+		return errs.WrapNotFound(err, "could not fetch package %q from table %s: not found on pypistats", pkg, tbl.Name)
 	case errors.Is(err, context.Canceled):
-		return errs.WrapCancelled(err, "fetching %s/%s", pkg, tbl.Endpoint)
+		return errs.WrapCancelled(err, "could not fetch %s/%s", pkg, tbl.Endpoint)
 	case errors.Is(err, context.DeadlineExceeded):
-		return errs.WrapTimeout(err, "fetching %s/%s", pkg, tbl.Endpoint)
+		return errs.WrapTimeout(err, "could not fetch %s/%s", pkg, tbl.Endpoint)
 	default:
-		return errs.WrapIO(err, "fetching %s/%s", pkg, tbl.Endpoint)
+		return errs.WrapIO(err, "could not fetch %s/%s", pkg, tbl.Endpoint)
 	}
 }
 
@@ -121,7 +121,7 @@ func buildCategoryRecord(alloc memory.Allocator, pkg string, rows []apiRow) (arr
 	for _, row := range rows {
 		d, err := time.Parse(time.DateOnly, row.Date)
 		if err != nil {
-			return nil, fmt.Errorf("invalid date %q: %w", row.Date, err)
+			return nil, fmt.Errorf("could not parse date %q: %w", row.Date, err)
 		}
 		pkgB.Append(pkg)
 		// category is part of the primary key, so it must not be null. pypistats

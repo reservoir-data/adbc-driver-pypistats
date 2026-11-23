@@ -143,7 +143,7 @@ func (db *databaseImpl) SetOption(ctx context.Context, key, val string) error {
 		db.cfg.packages = parsePackages(val)
 	case OptionBaseURL:
 		if val == "" {
-			return db.ErrorHelper.InvalidArgument("%s must not be empty", key)
+			return db.ErrorHelper.InvalidArgument("could not set %s: must not be empty", key)
 		}
 		db.cfg.baseURL = val
 	case OptionMaxConcurrency, OptionMaxRetries:
@@ -153,20 +153,20 @@ func (db *databaseImpl) SetOption(ctx context.Context, key, val string) error {
 		}
 		n, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			return db.ErrorHelper.InvalidArgument("%s must be an integer, got %q", key, val)
+			return db.ErrorHelper.InvalidArgument("could not set %s: must be an integer, got %q", key, val)
 		}
 		return db.SetOptionInt(ctx, key, n)
 	case OptionRequestTimeout:
 		f, err := strconv.ParseFloat(val, 64)
 		if err != nil {
-			return db.ErrorHelper.InvalidArgument("%s must be a number of seconds, got %q", key, val)
+			return db.ErrorHelper.InvalidArgument("could not set %s: must be a number of seconds, got %q", key, val)
 		}
 		return db.SetOptionDouble(ctx, key, f)
 	case adbc.OptionKeyURI:
 		// Nothing to connect to; accept an empty or pypistats:// URI so the
 		// driver works with tools that always pass one.
 		if val != "" && !strings.HasPrefix(val, "pypistats://") {
-			return db.ErrorHelper.InvalidArgument("unsupported uri %q (expected empty or pypistats://)", val)
+			return db.ErrorHelper.InvalidArgument("could not set uri: expected empty or pypistats://")
 		}
 	default:
 		return db.DatabaseImplBase.SetOption(ctx, key, val)
@@ -178,12 +178,12 @@ func (db *databaseImpl) SetOptionInt(ctx context.Context, key string, val int64)
 	switch key {
 	case OptionMaxConcurrency:
 		if val < 1 {
-			return db.ErrorHelper.InvalidArgument("%s must be >= 1, got %d", key, val)
+			return db.ErrorHelper.InvalidArgument("could not set %s: must be >= 1, got %d", key, val)
 		}
 		db.cfg.maxConcurrency = int(val)
 	case OptionMaxRetries:
 		if val < 0 {
-			return db.ErrorHelper.InvalidArgument("%s must be >= 0, got %d", key, val)
+			return db.ErrorHelper.InvalidArgument("could not set %s: must be >= 0, got %d", key, val)
 		}
 		db.cfg.maxRetries = int(val)
 	case OptionRequestTimeout:
@@ -198,7 +198,7 @@ func (db *databaseImpl) SetOptionDouble(ctx context.Context, key string, val flo
 	switch key {
 	case OptionRequestTimeout:
 		if val <= 0 {
-			return db.ErrorHelper.InvalidArgument("%s must be > 0, got %v", key, val)
+			return db.ErrorHelper.InvalidArgument("could not set %s: must be > 0, got %v", key, val)
 		}
 		db.cfg.timeout = time.Duration(val * float64(time.Second))
 	default:
