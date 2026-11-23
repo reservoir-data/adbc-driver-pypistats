@@ -21,16 +21,16 @@ import (
 const (
 	// OptionPackages is a comma-separated list of PyPI package names.
 	// Settable on the database (default for all statements) and on statements.
-	OptionPackages = "adbc.pypistats.packages"
+	OptionPackages = "pypistats.query.packages"
 	// OptionBaseURL overrides the API root (default https://pypistats.org/api).
-	OptionBaseURL = "adbc.pypistats.base_url"
+	OptionBaseURL = "pypistats.base_url"
 	// OptionMaxConcurrency bounds concurrent HTTP requests per query. Unset
 	// (the default) picks a value automatically from the available CPUs.
-	OptionMaxConcurrency = "adbc.pypistats.max_concurrency"
+	OptionMaxConcurrency = "pypistats.max_concurrency"
 	// OptionMaxRetries is the number of retries on HTTP 429/5xx (default 3).
-	OptionMaxRetries = "adbc.pypistats.max_retries"
+	OptionMaxRetries = "pypistats.max_retries"
 	// OptionRequestTimeout is the per-request timeout in seconds (default 30).
-	OptionRequestTimeout = "adbc.pypistats.request_timeout"
+	OptionRequestTimeout = "pypistats.request_timeout"
 
 	// Requests are I/O-bound and pypistats.org rate-limits aggressively, so the
 	// automatic concurrency is clamped to a small range.

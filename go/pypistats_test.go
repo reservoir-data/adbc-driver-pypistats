@@ -361,7 +361,7 @@ func TestTypedOptions(t *testing.T) {
 
 	assert.Equal(t, adbc.StatusInvalidArgument, adbcStatus(t, opts.SetOptionInt(ctx, OptionMaxConcurrency, 0)))
 	assert.Equal(t, adbc.StatusInvalidArgument, adbcStatus(t, opts.SetOption(ctx, adbc.OptionKeyURI, "https://example.com")))
-	assert.Equal(t, adbc.StatusNotImplemented, adbcStatus(t, opts.SetOption(ctx, "adbc.pypistats.bogus", "x")))
+	assert.Equal(t, adbc.StatusNotImplemented, adbcStatus(t, opts.SetOption(ctx, "pypistats.bogus", "x")))
 }
 
 // The driver manager calls set_autocommit(False) on connect and warns that

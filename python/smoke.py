@@ -35,7 +35,7 @@ with dbapi.connect(driver=driver_path, uri="profile://pypistats") as conn:
             print(tbl.slice(0, 5))
 
         # Statement-level override of the profile's package list.
-        cur.adbc_statement.set_options(**{"adbc.pypistats.packages": "pyarrow"})
+        cur.adbc_statement.set_options(**{"pypistats.query.packages": "pyarrow"})
         cur.execute("SELECT * FROM system")
         tbl = cur.fetch_arrow_table()
         print(f"\n{table}: {tbl.num_rows} rows, packages={set(tbl['package'].to_pylist())}")

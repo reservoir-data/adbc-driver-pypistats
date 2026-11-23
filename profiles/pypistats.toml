@@ -12,4 +12,4 @@ profile_version = 1
 [Options]
 # Default scope for queries without `WHERE package ...`. Profile values can't
 # be arrays, so packages are comma-separated.
-"adbc.pypistats.packages" = "{{ env_var(PYPISTATS_PACKAGES) }}"
+"pypistats.query.packages" = "{{ env_var(PYPISTATS_PACKAGES) }}"

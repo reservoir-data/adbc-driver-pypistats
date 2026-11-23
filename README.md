@@ -17,7 +17,7 @@ SELECT * FROM system WHERE package IN ('urllib3', 'requests')
 Only a single `package = '...'` or `package IN (...)` predicate is supported.
 Any other SQL (other columns, `AND`/`OR`, `LIMIT`, ...) is rejected with
 `NOT_IMPLEMENTED` rather than ignored, so results never silently differ from
-what the query asks for. Without a predicate, the `adbc.pypistats.packages`
+what the query asks for. Without a predicate, the `pypistats.query.packages`
 option is used as the default scope; a predicate always overrides it.
 
 | Table          | Endpoint                               |
@@ -41,11 +41,11 @@ package, in the order the packages are listed.
 
 | Key                               | Default                      | Scope               |
 |-----------------------------------|------------------------------|---------------------|
-| `adbc.pypistats.packages`         | (none; default scope for queries without a `WHERE package ...`) | database, statement |
-| `adbc.pypistats.max_concurrency`  | (auto: CPU count, clamped to 2–8) | database       |
-| `adbc.pypistats.max_retries`      | `3` (HTTP 429/5xx, honors `Retry-After`) | database |
-| `adbc.pypistats.request_timeout`  | `30` (seconds)               | database            |
-| `adbc.pypistats.base_url`         | `https://pypistats.org/api`  | database            |
+| `pypistats.query.packages`         | (none; default scope for queries without a `WHERE package ...`) | database, statement |
+| `pypistats.max_concurrency`  | (auto: CPU count, clamped to 2–8) | database       |
+| `pypistats.max_retries`      | `3` (HTTP 429/5xx, honors `Retry-After`) | database |
+| `pypistats.request_timeout`  | `30` (seconds)               | database            |
+| `pypistats.base_url`         | `https://pypistats.org/api`  | database            |
 
 `packages` is a comma-separated string, because profile values can't be TOML
 arrays. See [`profiles/pypistats.toml`](profiles/pypistats.toml).
@@ -89,7 +89,7 @@ SELECT * FROM read_pypistats('SELECT * FROM system WHERE package IN (''pyarrow''
 
 Using `CREATE MACRO` lets you work around the fact that `ATTACH ... (TYPE adbc)`
 can't push `WHERE package` down, so it fails with "no packages selected" unless
-the configured profile sets `"adbc.pypistats.packages"`.
+the configured profile sets `"pypistats.query.packages"`.
 
 ## pypistats usage notes
 
