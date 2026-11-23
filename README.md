@@ -72,8 +72,29 @@ with dbapi.connect(driver="build/libadbc_driver_pypistats.dylib",
 adbc-drivers MySQL driver (which generates it from `_tmpl/driver.go.tmpl`) and
 renamed with the `PyPIStats` prefix.
 
+## Use in DuckDB
+
+You can use the [ADBC extension][duckdb-adbc-ext] to read PyPI stats data:
+
+```sql
+INSTALL adbc FROM community;
+
+LOAD adbc;
+
+CREATE MACRO read_pypistats(query) AS TABLE
+SELECT * FROM read_adbc('profile:///path/to/pypistats.toml', query);
+
+SELECT * FROM read_pypistats('SELECT * FROM system WHERE package IN (''pyarrow'', ''nanoarrow'')');
+```
+
+Using `CREATE MACRO` lets you work around the fact that `ATTACH ... (TYPE adbc)`
+can't push `WHERE package` down, so it fails with "no packages selected" unless
+the configured profile sets `"adbc.pypistats.packages"`.
+
 ## pypistats usage notes
 
 The API keeps 180 days of data, updates once a day, and rate-limits by IP. Don't
 use it to bulk-download history for many packages; use the BigQuery
 `pypi` datasets for that.
+
+[duckdb-adbc-ext]: https://duckdb.org/community_extensions/extensions/adbc
