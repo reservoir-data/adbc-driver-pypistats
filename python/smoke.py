@@ -40,3 +40,8 @@ with dbapi.connect(driver=driver_path, uri="profile://pypistats") as conn:
         tbl = cur.fetch_arrow_table()
         print(f"\n{table}: {tbl.num_rows} rows, packages={set(tbl['package'].to_pylist())}")
         print("\noverride:", tbl.group_by("category").aggregate([("downloads", "sum")]))
+
+        # Explicit predicate; takes precedence over any configured default.
+        cur.execute("SELECT * FROM system WHERE package IN ('urllib3', 'requests')")
+        tbl = cur.fetch_arrow_table()
+        print(f"\nWHERE: {tbl.num_rows} rows, packages={set(tbl['package'].to_pylist())}")

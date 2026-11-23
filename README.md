@@ -6,7 +6,19 @@ A read-only [ADBC](https://arrow.apache.org/adbc/) driver, written in Go on
 
 ## Tables
 
-The statement query is a table name (`SELECT * FROM <table>` also works).
+The statement query is a table name (`SELECT * FROM <table>` also works),
+optionally filtered by package:
+
+```sql
+SELECT * FROM system WHERE package = 'urllib3'
+SELECT * FROM system WHERE package IN ('urllib3', 'requests')
+```
+
+Only a single `package = '...'` or `package IN (...)` predicate is supported.
+Any other SQL (other columns, `AND`/`OR`, `LIMIT`, ...) is rejected with
+`NOT_IMPLEMENTED` rather than ignored, so results never silently differ from
+what the query asks for. Without a predicate, the `adbc.pypistats.packages`
+option is used as the default scope; a predicate always overrides it.
 
 | Table          | Endpoint                               |
 |----------------|----------------------------------------|
@@ -23,13 +35,13 @@ downloads: uint32  not null
 ```
 
 The driver fetches packages concurrently and emits one record batch per
-package, in the order the packages are configured.
+package, in the order the packages are listed.
 
 ## Options
 
 | Key                               | Default                      | Scope               |
 |-----------------------------------|------------------------------|---------------------|
-| `adbc.pypistats.packages`         | (required)                   | database, statement |
+| `adbc.pypistats.packages`         | (none; default scope for queries without a `WHERE package ...`) | database, statement |
 | `adbc.pypistats.max_concurrency`  | `2`                          | database            |
 | `adbc.pypistats.max_retries`      | `3` (HTTP 429/5xx, honors `Retry-After`) | database |
 | `adbc.pypistats.request_timeout`  | `30` (seconds)               | database            |

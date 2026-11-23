@@ -181,6 +181,88 @@ func TestSystemWithSQLAndStatementPackages(t *testing.T) {
 	}, collect(t, rdr))
 }
 
+func TestWherePackage(t *testing.T) {
+	fs := newFakeServer(t)
+	h := setup(t, fs, nil) // default scope is "requests, numpy"
+
+	rdr, err := h.query(t, "SELECT * FROM system WHERE package = 'urllib3'", nil)
+	require.NoError(t, err)
+	assert.Equal(t, []row{
+		{"urllib3", "linux", "2026-11-01", 100},
+		{"urllib3", "darwin", "2026-11-01", 20},
+	}, collect(t, rdr))
+	assert.EqualValues(t, 1, fs.hits.Load())
+}
+
+func TestWherePackageIn(t *testing.T) {
+	fs := newFakeServer(t)
+	h := setup(t, fs, nil)
+
+	// The predicate overrides both the database default and the statement option;
+	// duplicates are fetched once and order is preserved.
+	rdr, err := h.query(t,
+		`select * from pypistats.api."system" where PACKAGE in ('urllib3', 'requests', 'urllib3');`,
+		map[string]string{OptionPackages: "ignored"})
+	require.NoError(t, err)
+	rows := collect(t, rdr)
+	require.Len(t, rows, 4)
+	assert.Equal(t, "urllib3", rows[0].pkg)
+	assert.Equal(t, "requests", rows[2].pkg)
+	assert.EqualValues(t, 2, fs.hits.Load())
+}
+
+func TestWhereQuoteEscapes(t *testing.T) {
+	q, err := parseQuery("SELECT * FROM system WHERE package = 'it''s'")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"it's"}, q.packages)
+}
+
+func TestNoPackagesSelected(t *testing.T) {
+	fs := newFakeServer(t)
+	h := setup(t, fs, map[string]string{OptionPackages: ""})
+
+	_, err := h.query(t, "SELECT * FROM system", nil)
+	assert.Equal(t, adbc.StatusInvalidState, adbcStatus(t, err))
+	assert.Contains(t, err.Error(), "WHERE package")
+
+	// A predicate is enough without any default scope.
+	rdr, err := h.query(t, "SELECT * FROM system WHERE package = 'requests'", nil)
+	require.NoError(t, err)
+	assert.Len(t, collect(t, rdr), 2)
+}
+
+func TestUnsupportedSQL(t *testing.T) {
+	fs := newFakeServer(t)
+	h := setup(t, fs, nil)
+
+	for _, q := range []string{
+		"SELECT package FROM system",
+		"SELECT * FROM system WHERE category = 'linux'",
+		"SELECT * FROM system WHERE package LIKE 'a%'",
+		"SELECT * FROM system WHERE package = 'a' AND category = 'linux'",
+		"SELECT * FROM system WHERE package = 'a' OR package = 'b'",
+		"SELECT * FROM system WHERE package = 'a' LIMIT 1",
+		"SELECT * FROM system ORDER BY date",
+	} {
+		_, err := h.query(t, q, nil)
+		assert.Equal(t, adbc.StatusNotImplemented, adbcStatus(t, err), q)
+	}
+
+	for _, q := range []string{
+		"SELECT * FROM system WHERE package = ",
+		"SELECT * FROM system WHERE package IN ()",
+		"SELECT * FROM system WHERE package IN ('a'",
+		"SELECT * FROM system WHERE package = 'a",
+		"SELECT * FROM system WHERE package = 1",
+		"SELECT * FROM system WHERE package = ''",
+		"DELETE FROM system",
+	} {
+		_, err := h.query(t, q, nil)
+		assert.Equal(t, adbc.StatusInvalidArgument, adbcStatus(t, err), q)
+	}
+	assert.Zero(t, fs.hits.Load())
+}
+
 func TestRetriesOn429(t *testing.T) {
 	fs := newFakeServer(t)
 	fs.throttle.Store(2)
