@@ -10,6 +10,8 @@ import (
 type parsedQuery struct {
 	// table is the unqualified table name, as written.
 	table string
+	// columns is the projection, as written; nil means SELECT *.
+	columns []string
 	// packages is non-nil when the query has a package predicate.
 	packages []string
 }
@@ -188,7 +190,7 @@ func (p *parser) expectString() (string, error) {
 // parseQuery accepts
 //
 //	<table>
-//	SELECT * FROM <table> [WHERE package = '<pkg>' | package IN ('<pkg>', ...)] [;]
+//	SELECT * | <column>[, <column>...] FROM <table> [WHERE package = '<pkg>' | package IN ('<pkg>', ...)] [;]
 //
 // Table names may be qualified (pypistats.api.<table>) and are matched
 // case-insensitively. Any other SQL is rejected: ignoring a clause the driver
@@ -213,7 +215,17 @@ func parseQuery(q string) (parsedQuery, error) {
 		return out, err
 	}
 	if !p.acceptPunct("*") {
-		return out, unsupportedErr("only SELECT * is supported")
+		// Clients such as DuckDB push column projections down.
+		for {
+			c := p.next()
+			if c == nil || c.kind != tokIdent {
+				return out, unsupportedErr("only SELECT * or a list of columns is supported")
+			}
+			out.columns = append(out.columns, c.text)
+			if !p.acceptPunct(",") {
+				break
+			}
+		}
 	}
 	if err := p.expectKeyword("from"); err != nil {
 		return out, err

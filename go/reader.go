@@ -40,6 +40,7 @@ func newDownloadsReader(
 	c *client,
 	tbl table,
 	packages []string,
+	cols []int,
 	maxConcurrency int,
 ) *downloadsReader {
 	// The reader outlives the ExecuteQuery call, so detach from the caller's
@@ -47,7 +48,7 @@ func newDownloadsReader(
 	ctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 
 	r := &downloadsReader{
-		schema:  categorySchema,
+		schema:  projectSchema(cols),
 		results: make([]chan fetchResult, len(packages)),
 		cancel:  cancel,
 	}
@@ -92,6 +93,19 @@ func wrapFetchError(errs *driverbase.ErrorHelper, err error, pkg string, tbl tab
 	default:
 		return errs.WrapIO(err, "fetching %s/%s", pkg, tbl.Endpoint)
 	}
+}
+
+// projectRecord narrows rec to cols and releases it. A nil cols keeps every column.
+func projectRecord(rec arrow.RecordBatch, schema *arrow.Schema, cols []int) arrow.RecordBatch {
+	if cols == nil {
+		return rec
+	}
+	defer rec.Release()
+	arrs := make([]arrow.Array, len(cols))
+	for i, c := range cols {
+		arrs[i] = rec.Column(c)
+	}
+	return array.NewRecordBatch(schema, arrs, rec.NumRows())
 }
 
 func buildCategoryRecord(alloc memory.Allocator, pkg string, rows []apiRow) (arrow.RecordBatch, error) {

@@ -231,12 +231,25 @@ func TestNoPackagesSelected(t *testing.T) {
 	assert.Len(t, collect(t, rdr), 2)
 }
 
+func TestColumnProjection(t *testing.T) {
+	fs := newFakeServer(t)
+	h := setup(t, fs, nil)
+
+	rdr, err := h.query(t, `SELECT "downloads", "package" FROM system WHERE package = 'requests'`, nil)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"downloads", "package"}, []string{rdr.Schema().Field(0).Name, rdr.Schema().Field(1).Name})
+	assert.Equal(t, 2, rdr.Schema().NumFields())
+	assert.NotEmpty(t, collect(t, rdr))
+
+	_, err = h.query(t, "SELECT nope FROM system", nil)
+	assert.Equal(t, adbc.StatusNotFound, adbcStatus(t, err))
+}
+
 func TestUnsupportedSQL(t *testing.T) {
 	fs := newFakeServer(t)
 	h := setup(t, fs, nil)
 
 	for _, q := range []string{
-		"SELECT package FROM system",
 		"SELECT * FROM system WHERE category = 'linux'",
 		"SELECT * FROM system WHERE package LIKE 'a%'",
 		"SELECT * FROM system WHERE package = 'a' AND category = 'linux'",
@@ -416,4 +429,12 @@ func TestMetadata(t *testing.T) {
 	}
 	require.NoError(t, rdr.Err())
 	assert.Equal(t, []string{"python_minor"}, names)
+}
+
+func TestParseQueryProjection(t *testing.T) {
+	q, err := parseQuery(`SELECT "package", "downloads" FROM "api"."python_minor" WHERE "package" = 'requests'`)
+	require.NoError(t, err)
+	assert.Equal(t, "python_minor", q.table)
+	assert.Equal(t, []string{"package", "downloads"}, q.columns)
+	assert.Equal(t, []string{"requests"}, q.packages)
 }
