@@ -1977,10 +1977,4 @@ func AdbcDriverPypistatsInit(version C.int, rawDriver *C.void, err *C.struct_Adb
 	return C.ADBC_STATUS_OK
 }
 
-//export AdbcDriverPyPIStatsInit
-func AdbcDriverPyPIStatsInit(version C.int, rawDriver *C.void, err *C.struct_AdbcError) C.AdbcStatusCode {
-	// Backwards compatibility alias
-	return AdbcDriverPypistatsInit(version, rawDriver, err)
-}
-
 func main() {}

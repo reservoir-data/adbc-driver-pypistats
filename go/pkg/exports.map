@@ -1,0 +1,7 @@
+# Linux: only export ADBC entrypoints (see Makefile)
+{
+  global:
+    Adbc*;
+  local:
+    *;
+};

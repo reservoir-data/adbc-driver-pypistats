@@ -89,7 +89,7 @@ AdbcStatusCode PyPIStatsStatementSetOptionInt(struct AdbcStatement*, const char*
 AdbcStatusCode PyPIStatsStatementSetSqlQuery(struct AdbcStatement* stmt, const char* query, struct AdbcError* err);
 AdbcStatusCode PyPIStatsStatementSetSubstraitPlan(struct AdbcStatement* stmt, const uint8_t* plan, size_t length, struct AdbcError* err);
 
-AdbcStatusCode AdbcDriverPyPIStatsInit(int version, void* rawDriver, struct AdbcError* err);
+AdbcStatusCode AdbcDriverPypistatsInit(int version, void* rawDriver, struct AdbcError* err);
 
 static inline void PyPIStatserrRelease(struct AdbcError* error) {
   if (error->release) {

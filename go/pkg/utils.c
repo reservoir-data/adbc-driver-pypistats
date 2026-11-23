@@ -436,7 +436,7 @@ AdbcStatusCode AdbcStatementSetOptionInt(struct AdbcStatement* statement,
 
 ADBC_EXPORT
 AdbcStatusCode AdbcDriverInit(int version, void* driver, struct AdbcError* error) {
-  return AdbcDriverPyPIStatsInit(version, driver, error);
+  return AdbcDriverPypistatsInit(version, driver, error);
 }
 #endif  // ADBC_NO_COMMON_ENTRYPOINTS
 
