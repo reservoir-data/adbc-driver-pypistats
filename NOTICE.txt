@@ -1,0 +1,5 @@
+ADBC Driver for PyPIStats
+Copyright 2026 Edgar Ramírez-Mondragón
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
