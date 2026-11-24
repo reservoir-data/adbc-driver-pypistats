@@ -40,18 +40,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5  # v7.1.0
+      - uses: actions/setup-go@v7.1.0
         with:
           cache-dependency-path: go/go.sum
           check-latest: true
           go-version-file: go/go.mod
 
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+      - uses: actions/setup-python@v7.1.0
         with:
           # Stick to 3.14 as some hooks/dependencies are not ready for 3.15
           python-version: "3.14"
@@ -60,7 +60,7 @@ jobs:
         run: pip install pre-commit
 
       - name: pre-commit (cache)
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -70,6 +70,6 @@ jobs:
           pre-commit run --all-files --color=always --show-diff-on-failure --verbose
 
       - name: Analyze workflows with zizmor
-        uses: zizmorcore/zizmor-action@bd12b495c90993a4301c73398142281a61499af3  # v0.9.0
+        uses: zizmorcore/zizmor-action@v0.9.0
         with:
           advanced-security: false

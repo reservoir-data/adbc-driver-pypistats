@@ -66,20 +66,20 @@ jobs:
           # https://github.com/actions/runner-images/issues/2840
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
           submodules: 'recursive'
 
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5  # v7.1.0
+      - uses: actions/setup-go@v7.1.0
         with:
           cache: false
           cache-dependency-path: go/go.sum
           check-latest: true
           go-version-file: go/go.mod
 
-      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e  # v0.11.3
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           pixi-version: v0.84.2
           run-install: false
@@ -179,13 +179,13 @@ jobs:
       packages: read
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
           submodules: 'recursive'
 
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5  # v7.1.0
+      - uses: actions/setup-go@v7.1.0
         with:
           cache: false
           cache-dependency-path: go/go.sum
@@ -193,7 +193,7 @@ jobs:
           go-version-file: go/go.mod
 
       # CGO requires a GCC-like frontend, provide this via MSYS Clang
-      - uses: msys2/setup-msys2@3c51bf698df1e37b2261f53cb67797b97761185c  # v2.34.0
+      - uses: msys2/setup-msys2@v2.34.0
         id: msys2
         if: matrix.platform == 'windows' && matrix.arch == 'arm64'
         with:
@@ -210,7 +210,7 @@ jobs:
           "$env:STEPS_MSYS2_OUTPUTS_MSYS2_LOCATION\clangarm64\bin" |
             Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e  # v0.11.3
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           pixi-version: v0.84.2
           run-install: false
@@ -258,7 +258,7 @@ jobs:
             ./ci/scripts/post-build.sh release ${{ matrix.platform }} ${{ matrix.arch }}
           fi
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: drivers-${{ matrix.platform }}-${{ matrix.arch }}
           path: "go/build/libadbc_driver_pypistats.*"
@@ -273,24 +273,24 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
           submodules: 'recursive'
 
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5  # v7.1.0
+      - uses: actions/setup-go@v7.1.0
         with:
           cache: false
           check-latest: true
           go-version-file: go/go.mod
 
-      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e  # v0.11.3
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           pixi-version: v0.84.2
           run-install: false
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+      - uses: actions/download-artifact@v8.0.2
         with:
           pattern: "drivers-*"
           path: "~/drivers"
@@ -319,7 +319,7 @@ jobs:
 
           ls ~/packages
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: all-packages
           path: ~/packages
@@ -341,15 +341,15 @@ jobs:
           - { platform: windows, arch: arm64, runner: windows-11-vs2026-arm }
     steps:
       # for now, install dbc from main
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5  # v7.1.0
+      - uses: actions/setup-go@v7.1.0
         with:
           cache: false
           go-version: 'stable'
-      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e  # v0.11.3
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           pixi-version: v0.84.2
           run-install: false
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: "all-packages"
           path: "~/packages"
@@ -366,7 +366,7 @@ jobs:
           echo "Installing ${driver_pkg}"
           ./dbc install --no-verify "${driver_pkg}"
           echo "Installed ${driver_pkg}"
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -400,18 +400,18 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
           submodules: 'recursive'
 
-      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e  # v0.11.3
+      - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           pixi-version: v0.84.2
           run-install: false
 
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: "all-packages"
           path: "~/packages"
