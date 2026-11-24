@@ -453,3 +453,46 @@ func TestParseQueryProjection(t *testing.T) {
 	assert.Equal(t, []string{"package", "downloads"}, q.columns)
 	assert.Equal(t, []string{"requests"}, q.packages)
 }
+
+// Every record batch must carry the same schema the reader and ExecuteSchema
+// advertise, otherwise consumers that trust the stream schema misread the data.
+func TestBatchSchemasMatchReader(t *testing.T) {
+	fs := newFakeServer(t)
+	h := setup(t, fs, nil)
+	ctx := context.Background()
+
+	for _, q := range []string{
+		"python_minor",
+		"system",
+		"SELECT * FROM system WHERE package IN ('requests', 'numpy')",
+		`SELECT "downloads", "package" FROM python_minor`,
+		"SELECT date FROM system WHERE package = 'requests'",
+	} {
+		t.Run(q, func(t *testing.T) {
+			stmt, err := h.conn.NewStatement(ctx)
+			require.NoError(t, err)
+			defer stmt.Close(ctx)
+			require.NoError(t, stmt.SetSqlQuery(ctx, q))
+
+			want, err := stmt.(adbc.StatementExecuteSchema).ExecuteSchema(ctx)
+			require.NoError(t, err)
+
+			rdr, _, err := stmt.ExecuteQuery(ctx)
+			require.NoError(t, err)
+			defer rdr.Release()
+
+			assert.True(t, want.Equal(rdr.Schema()), "ExecuteSchema %s != reader schema %s", want, rdr.Schema())
+			batches := 0
+			for rdr.Next() {
+				batches++
+				rec := rdr.RecordBatch()
+				assert.True(t, rdr.Schema().Equal(rec.Schema()), "reader schema %s != batch schema %s", rdr.Schema(), rec.Schema())
+				for i, col := range rec.Columns() {
+					assert.True(t, arrow.TypeEqual(rdr.Schema().Field(i).Type, col.DataType()), "column %d type %s", i, col.DataType())
+				}
+			}
+			require.NoError(t, rdr.Err())
+			assert.Positive(t, batches)
+		})
+	}
+}
