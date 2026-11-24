@@ -52,17 +52,26 @@ arrays. See [`profiles/pypistats.toml`](profiles/pypistats.toml).
 
 ## Build & use
 
+Requires [pixi](https://pixi.sh) and Go. Run from `go/`:
+
 ```sh
-make build   # build/libadbc_driver_pypistats.{dylib,so,dll}
-make test    # Go tests against a fake server
-make smoke   # real API, via the Python driver manager + profile
+pixi run make                  # go/build/libadbc_driver_pypistats.{dylib,so,dll}
+pixi run adbc-make check       # verify exported symbols and runtime dependencies
+pixi run test                  # Go tests against a fake server
+```
+
+Smoke test against the real API, via the Python driver manager + profile
+(uses the library from `pixi run make`; pass another path as the first argument):
+
+```sh
+uv run python/smoke.py
 ```
 
 ```python
 from adbc_driver_manager import dbapi
 
 # with ADBC_PROFILE_PATH=./profiles
-with dbapi.connect(driver="build/libadbc_driver_pypistats.dylib",
+with dbapi.connect(driver="go/build/libadbc_driver_pypistats.dylib",
                    uri="profile://pypistats") as conn, conn.cursor() as cur:
     cur.execute("system")
     print(cur.fetch_arrow_table())

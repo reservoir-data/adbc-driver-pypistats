@@ -1,11 +1,23 @@
-"""Smoke test: load the driver via the ADBC driver manager using a profile."""
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["adbc-driver-manager", "pyarrow"]
+# ///
+"""Smoke test: load the driver via the ADBC driver manager using a profile.
+
+Run from anywhere with `uv run python/smoke.py [path/to/libadbc_driver_pypistats]`.
+Defaults to the library built by `pixi run make` and the repo's profiles/.
+"""
 
 import os
 import sys
+from pathlib import Path
 
 from adbc_driver_manager import dbapi
 
-driver_path = sys.argv[1]
+root = Path(__file__).resolve().parent.parent
+suffix = {"darwin": "dylib", "win32": "dll"}.get(sys.platform, "so")
+driver_path = sys.argv[1] if len(sys.argv) > 1 else str(root / "go" / "build" / f"libadbc_driver_pypistats.{suffix}")
+os.environ.setdefault("ADBC_PROFILE_PATH", str(root / "profiles"))
 os.environ["PYPISTATS_PACKAGES"] = "requests,numpy,nanoarrow"
 
 with dbapi.connect(driver=driver_path, uri="profile://pypistats") as conn:
