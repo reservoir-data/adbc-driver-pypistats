@@ -102,7 +102,7 @@ func (c *client) do(ctx context.Context, u string) (*apiResponse, time.Duration,
 		}
 		return nil, -1, &retryableError{err}
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	switch {
 	case res.StatusCode == http.StatusOK:

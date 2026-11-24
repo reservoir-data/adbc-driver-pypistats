@@ -71,8 +71,13 @@ uv run python/smoke.py
 from adbc_driver_manager import dbapi
 
 # with ADBC_PROFILE_PATH=./profiles
-with dbapi.connect(driver="go/build/libadbc_driver_pypistats.dylib",
-                   uri="profile://pypistats") as conn, conn.cursor() as cur:
+with (
+    dbapi.connect(
+        driver="go/build/libadbc_driver_pypistats.dylib",
+        uri="profile://pypistats",
+    ) as conn,
+    conn.cursor() as cur,
+):
     cur.execute("system")
     print(cur.fetch_arrow_table())
 ```

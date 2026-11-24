@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -78,9 +79,9 @@ func newFakeServer(t *testing.T) *fakeServer {
 		w.Header().Set("Content-Type", "application/json")
 		switch endpoint {
 		case "python_minor":
-			fmt.Fprintf(w, pythonMinorBody, pkg)
+			_, _ = fmt.Fprintf(w, pythonMinorBody, pkg)
 		case "system":
-			fmt.Fprintf(w, systemBody, pkg)
+			_, _ = fmt.Fprintf(w, systemBody, pkg)
 		default:
 			http.NotFound(w, r)
 		}
@@ -103,9 +104,7 @@ func setup(t *testing.T, fs *fakeServer, opts map[string]string) *harness {
 		OptionBaseURL:  fs.URL + "/api",
 		OptionPackages: "requests, numpy",
 	}
-	for k, v := range opts {
-		all[k] = v
-	}
+	maps.Copy(all, opts)
 	db, err := NewDriver(alloc).NewDatabaseWithContext(ctx, all)
 	require.NoError(t, err)
 	conn, err := db.Open(ctx)
@@ -124,7 +123,7 @@ func (h *harness) query(t *testing.T, q string, stmtOpts map[string]string) (arr
 	ctx := context.Background()
 	stmt, err := h.conn.NewStatement(ctx)
 	require.NoError(t, err)
-	defer stmt.Close(ctx)
+	defer func() { _ = stmt.Close(ctx) }()
 	for k, v := range stmtOpts {
 		require.NoError(t, stmt.SetOption(ctx, k, v))
 	}
@@ -369,7 +368,7 @@ func TestTypedOptions(t *testing.T) {
 	ctx := context.Background()
 	db, err := NewDriver(memory.DefaultAllocator).NewDatabaseWithContext(ctx, nil)
 	require.NoError(t, err)
-	defer db.Close(ctx)
+	defer func() { _ = db.Close(ctx) }()
 	opts := db.(adbc.GetSetOptionsWithContext)
 
 	// Profiles pass TOML integers/floats through SetOptionInt/SetOptionDouble.
@@ -485,7 +484,7 @@ func TestBatchSchemasMatchReader(t *testing.T) {
 		t.Run(q, func(t *testing.T) {
 			stmt, err := h.conn.NewStatement(ctx)
 			require.NoError(t, err)
-			defer stmt.Close(ctx)
+			defer func() { _ = stmt.Close(ctx) }()
 			require.NoError(t, stmt.SetSqlQuery(ctx, q))
 
 			want, err := stmt.(adbc.StatementExecuteSchema).ExecuteSchema(ctx)

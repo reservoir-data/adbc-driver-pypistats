@@ -1,0 +1,67 @@
+# Copyright (c) 2026 Edgar Ramírez-Mondragón
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+repos:
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: c0f278f1254ccc8fb09676bcdb8d847e7db493e5  # frozen: v0.17.4
+  hooks:
+    - id: ruff-check
+      name: "ruff check (isort)"
+      args: ["--select", "I", "--fix"]
+    - id: ruff-check
+      args: ["--fix"]
+    - id: ruff-format
+
+- repo: https://github.com/codespell-project/codespell
+  rev: 57b21406f092110c18776e39b0bda50d37c945c8  # frozen: v2.4.3
+  hooks:
+  - id: codespell
+    exclude: >
+        (?x)^(
+            .*go\.sum|
+            LICENSE\.txt
+        )$
+
+- repo: https://github.com/golangci/golangci-lint
+  rev: 49ff9b7f5e2eca29d113af14fbf722b87b22b50a  # frozen: v2.15.0
+  hooks:
+  - id: golangci-lint
+    name: lint
+    # Match go.mod; prek would otherwise install an older Go with GOTOOLCHAIN=local.
+    language_version: 1.26.9
+    entry: bash -c 'cd go && golangci-lint run --fix --timeout 5m'
+    types_or: [go, go-mod]
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-case-conflict
+  - id: check-executables-have-shebangs
+  - id: check-yaml
+  - id: detect-private-key
+  - id: end-of-file-fixer
+  - id: mixed-line-ending
+    args: [--fix=lf]
+    exclude: '\.bat$'
+  - id: trailing-whitespace
+
+- repo: local
+  hooks:
+  - id: gofix
+    name: go fix
+    language: system
+    types: [go]
+    entry: bash -c 'cd go && go fix ./...'
+    pass_filenames: false
