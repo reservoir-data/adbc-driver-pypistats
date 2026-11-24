@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/apache/arrow-adbc/go/adbc"
+	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/stretchr/testify/assert"
@@ -239,7 +240,21 @@ func TestColumnProjection(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{"downloads", "package"}, []string{rdr.Schema().Field(0).Name, rdr.Schema().Field(1).Name})
 	assert.Equal(t, 2, rdr.Schema().NumFields())
-	assert.NotEmpty(t, collect(t, rdr))
+	defer rdr.Release()
+	rows := 0
+	for rdr.Next() {
+		rec := rdr.RecordBatch()
+		require.EqualValues(t, 2, rec.NumCols())
+		dl := rec.Column(0).(*array.Uint32)
+		pkg := rec.Column(1).(*array.String)
+		for i := range int(rec.NumRows()) {
+			assert.Equal(t, "requests", pkg.Value(i))
+			assert.Positive(t, dl.Value(i))
+			rows++
+		}
+	}
+	require.NoError(t, rdr.Err())
+	assert.Equal(t, 2, rows)
 
 	_, err = h.query(t, "SELECT nope FROM system", nil)
 	assert.Equal(t, adbc.StatusNotFound, adbcStatus(t, err))

@@ -76,7 +76,7 @@ func newDownloadsReader(
 				ch <- fetchResult{err: errs.WrapInvalidData(err, "could not parse %s/%s", pkg, tbl.Endpoint)}
 				return
 			}
-			ch <- fetchResult{rec: rec}
+			ch <- fetchResult{rec: projectRecord(rec, r.schema, cols)}
 		}()
 	}
 	return r
