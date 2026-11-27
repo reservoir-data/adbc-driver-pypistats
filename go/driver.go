@@ -191,13 +191,13 @@ func (db *databaseImpl) SetOption(ctx context.Context, key, val string) error {
 func (db *databaseImpl) SetOptionInt(ctx context.Context, key string, val int64) error {
 	switch key {
 	case OptionMaxConcurrency:
-		if val < 1 {
-			return db.ErrorHelper.InvalidArgument("could not set %s: must be >= 1, got %d", key, val)
+		if val < 1 || val > 1024 {
+			return db.ErrorHelper.InvalidArgument("could not set %s: must be between 1 and 1024, got %d", key, val)
 		}
 		db.cfg.maxConcurrency = int(val)
 	case OptionMaxRetries:
-		if val < 0 {
-			return db.ErrorHelper.InvalidArgument("could not set %s: must be >= 0, got %d", key, val)
+		if val < 0 || val > 1024 {
+			return db.ErrorHelper.InvalidArgument("could not set %s: must be between 0 and 1024, got %d", key, val)
 		}
 		db.cfg.maxRetries = int(val)
 	case OptionRequestTimeout:
