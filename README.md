@@ -37,6 +37,28 @@ downloads: uint32  not null
 The driver fetches packages concurrently and emits one record batch per
 package, in the order the packages are listed.
 
+## Calls (experimental)
+
+Operations that don't fit as a table are exposed as *calls*, prototyping the
+convention discussed in [apache/arrow-adbc#4771](https://github.com/apache/arrow-adbc/issues/4771)
+on top of the metadata collections from [#4694](https://github.com/apache/arrow-adbc/pull/4694).
+Neither is standardized, so names may change. No new ABI is involved:
+
+```text
+SetOption("adbc.metadata.collection", "calls")   # ExecuteQuery: call_name, call_remarks
+SetOption("adbc.statement.call", "pypistats.recent")
+GetParameterSchema                               # inputs:  package: string not null
+ExecuteSchema                                    # outputs, without running it
+Bind / BindStream                                # one invocation per row
+ExecuteQuery                                     # one result row per bound row, in order
+```
+
+| Call               | Endpoint                         | Result                                          |
+|--------------------|----------------------------------|-------------------------------------------------|
+| `pypistats.recent` | `/api/packages/<pkg>/recent`     | `package`, `last_day`, `last_week`, `last_month` (int64) |
+
+The `meta` collection lists the available collections (`meta`, `calls`).
+
 ## Options
 
 | Key                               | Default                      | Scope               |

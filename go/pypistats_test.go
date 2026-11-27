@@ -82,6 +82,8 @@ func newFakeServer(t *testing.T) *fakeServer {
 			_, _ = fmt.Fprintf(w, pythonMinorBody, pkg)
 		case "system":
 			_, _ = fmt.Fprintf(w, systemBody, pkg)
+		case "recent":
+			_, _ = fmt.Fprintf(w, `{"data": {"last_day": %d, "last_week": 7, "last_month": 30}, "package": %q, "type": "recent_downloads"}`, len(pkg), pkg)
 		default:
 			http.NotFound(w, r)
 		}

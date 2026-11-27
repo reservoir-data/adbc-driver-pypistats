@@ -82,7 +82,7 @@ func newDownloadsReader(
 			}
 			resp, err := c.fetch(ctx, pkg, tbl.Endpoint)
 			if err != nil {
-				ch <- fetchResult{err: wrapFetchError(errs, err, pkg, tbl)}
+				ch <- fetchResult{err: wrapFetchError(errs, err, pkg, "table "+tbl.Name, tbl.Endpoint)}
 				return
 			}
 			rec, err := buildCategoryRecord(alloc, pkg, resp.Data)
@@ -96,16 +96,18 @@ func newDownloadsReader(
 	return r
 }
 
-func wrapFetchError(errs *driverbase.ErrorHelper, err error, pkg string, tbl table) error {
+// wrapFetchError maps a client error to an ADBC status. source names what was
+// being read (e.g. "table system"), for the not-found message.
+func wrapFetchError(errs *driverbase.ErrorHelper, err error, pkg, source, endpoint string) error {
 	switch {
 	case errors.Is(err, errPackageNotFound):
-		return errs.WrapNotFound(err, "could not fetch package %q from table %s: not found on pypistats", pkg, tbl.Name)
+		return errs.WrapNotFound(err, "could not fetch package %q from %s: not found on pypistats", pkg, source)
 	case errors.Is(err, context.Canceled):
-		return errs.WrapCancelled(err, "could not fetch %s/%s", pkg, tbl.Endpoint)
+		return errs.WrapCancelled(err, "could not fetch %s/%s", pkg, endpoint)
 	case errors.Is(err, context.DeadlineExceeded):
-		return errs.WrapTimeout(err, "could not fetch %s/%s", pkg, tbl.Endpoint)
+		return errs.WrapTimeout(err, "could not fetch %s/%s", pkg, endpoint)
 	default:
-		return errs.WrapIO(err, "could not fetch %s/%s", pkg, tbl.Endpoint)
+		return errs.WrapIO(err, "could not fetch %s/%s", pkg, endpoint)
 	}
 }
 

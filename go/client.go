@@ -57,18 +57,28 @@ type client struct {
 	backoff time.Duration
 }
 
-// fetch GETs /packages/<pkg>/<endpoint>, retrying on 429 and 5xx responses.
+// fetch GETs /packages/<pkg>/<endpoint> for a category-style endpoint.
 func (c *client) fetch(ctx context.Context, pkg, endpoint string) (*apiResponse, error) {
+	var out apiResponse
+	if err := c.fetchJSON(ctx, pkg, endpoint, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// fetchJSON GETs /packages/<pkg>/<endpoint> and decodes the body into out,
+// retrying on 429 and 5xx responses.
+func (c *client) fetchJSON(ctx context.Context, pkg, endpoint string, out any) error {
 	u := fmt.Sprintf("%s/packages/%s/%s", strings.TrimRight(c.baseURL, "/"), url.PathEscape(pkg), endpoint)
 
 	for attempt := 0; ; attempt++ {
-		resp, retryAfter, err := c.do(ctx, u)
+		retryAfter, err := c.do(ctx, u, out)
 		if err == nil {
-			return resp, nil
+			return nil
 		}
 		var re *retryableError
 		if !errors.As(err, &re) || attempt >= c.maxRetries {
-			return nil, err
+			return err
 		}
 		delay := c.backoff << attempt
 		if retryAfter >= 0 {
@@ -76,7 +86,7 @@ func (c *client) fetch(ctx context.Context, pkg, endpoint string) (*apiResponse,
 		}
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return ctx.Err()
 		case <-time.After(delay):
 		}
 	}
@@ -87,10 +97,10 @@ type retryableError struct{ err error }
 func (e *retryableError) Error() string { return e.err.Error() }
 func (e *retryableError) Unwrap() error { return e.err }
 
-func (c *client) do(ctx context.Context, u string) (*apiResponse, time.Duration, error) {
+func (c *client) do(ctx context.Context, u string, out any) (time.Duration, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
-		return nil, -1, err
+		return -1, err
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.userAgent)
@@ -98,26 +108,25 @@ func (c *client) do(ctx context.Context, u string) (*apiResponse, time.Duration,
 	res, err := c.http.Do(req)
 	if err != nil {
 		if ctx.Err() != nil {
-			return nil, -1, ctx.Err()
+			return -1, ctx.Err()
 		}
-		return nil, -1, &retryableError{err}
+		return -1, &retryableError{err}
 	}
 	defer func() { _ = res.Body.Close() }()
 
 	switch {
 	case res.StatusCode == http.StatusOK:
-		var out apiResponse
-		if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
-			return nil, -1, fmt.Errorf("decoding response from %s: %w", u, err)
+		if err := json.NewDecoder(res.Body).Decode(out); err != nil {
+			return -1, fmt.Errorf("decoding response from %s: %w", u, err)
 		}
-		return &out, -1, nil
+		return -1, nil
 	case res.StatusCode == http.StatusNotFound:
-		return nil, -1, fmt.Errorf("%w: GET %s returned 404", errPackageNotFound, u)
+		return -1, fmt.Errorf("%w: GET %s returned 404", errPackageNotFound, u)
 	case res.StatusCode == http.StatusTooManyRequests || res.StatusCode >= 500:
-		return nil, parseRetryAfter(res.Header.Get("Retry-After")),
+		return parseRetryAfter(res.Header.Get("Retry-After")),
 			&retryableError{fmt.Errorf("GET %s returned %s: %s", u, res.Status, readSnippet(res.Body))}
 	default:
-		return nil, -1, fmt.Errorf("GET %s returned %s: %s", u, res.Status, readSnippet(res.Body))
+		return -1, fmt.Errorf("GET %s returned %s: %s", u, res.Status, readSnippet(res.Body))
 	}
 }
 
