@@ -12,9 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import platform
+import sys
+
 import adbc_driver_manager.dbapi
+import pytest
 
 
+# PyArrow has no Windows ARM64 build (https://github.com/apache/arrow/issues/44310),
+# so the driver manager can't decode the result there.
+@pytest.mark.skipif(
+    sys.platform == "win32" and platform.machine() == "ARM64",
+    reason="PyArrow is not available on Windows ARM64",
+)
 def test_package() -> None:
     # The driver has nothing to connect to, so loading it is enough to verify
     # the package: no network access or credentials are needed.
